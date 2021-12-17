@@ -10,8 +10,8 @@ class IspitServis{
 
     public function getAll($naziv){
         $q = "select * from ispit";
-        if(isset($naziv)){
-            $q=$q." where naziv like %".$naziv."%";
+        if(isset($naziv) && $naziv!=''){
+            $q=$q." where naziv like '%".$naziv."%'";
         }
         return $this->broker->ucitajKolekciju($q);
     }
@@ -41,10 +41,10 @@ class IspitServis{
     }
 
     private function validate($ispit){
-        if($ispitDto['espb']<=0){
+        if($ispit['espb']<=0){
             throw new Exception("ESPB mora biti veci od nule");
         }
-        if($ispitDto['semestar']<1 || $ispitDto['semestar']>8){
+        if($ispit['semestar']<1 || $ispit['semestar']>8){
             throw new Exception("Semestar nije odgovarajuci");
         }
     }
