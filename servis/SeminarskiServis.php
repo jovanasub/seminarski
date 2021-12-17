@@ -39,7 +39,7 @@ class SeminarskiServis{
     }
 
     private function validate($seminarski){
-        if($seminarskiDto['broj_poena']<=0){
+        if($seminarski['broj_poena']<=0){
             throw new Exception("Broj poena mora biti veci od nule");
         }
     }

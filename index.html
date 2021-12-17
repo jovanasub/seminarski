@@ -31,46 +31,48 @@
         </div>
     </nav>
     <div class="mt-5 container">
-        <h1 class="text-center">Odrzavanje ispita</h1>
+        <h1 class="text-center">Odrzavanje seminarskih radova</h1>
 
-        <div class="row">
+        <div class="row mt-3">
             <div class="col-8">
-                <div class="m-4">
-                    <input type="text" class="form-control" id="pretraga" placeholder="Pretrazi...">
-                </div>
+
                 <table class="table">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Naziv</th>
-                            <th>Skraceni naziv</th>
-                            <th>ESPB</th>
-                            <th>Semestar</th>
+                            <th>Ispit</th>
+                            <th>Broj poena</th>
+                            <th>Obavezan</th>
                         </tr>
                     </thead>
-                    <tbody id='ispiti'>
+                    <tbody id='seminarski'>
 
                     </tbody>
                 </table>
             </div>
             <div class="col-4">
-                <h2 class="text-center">Forma ispit</h2>
+                <h2 class="text-center">Forma seminarski</h2>
                 <form id='forma' class="mt-3">
                     <div class='form-group'>
                         <label for="naziv">Naziv</label>
                         <input required class="form-control" id="naziv">
                     </div>
                     <div class='form-group'>
-                        <label for="skraceno">Skraceni naziv</label>
-                        <input required class="form-control" id="skraceno">
+                        <label for="broj_poena">Broj poena</label>
+                        <input required class="form-control" type="number" min="1" id="broj_poena">
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="obavezan">
+                        <label class="form-check-label" for="obavezan">Obavezan</label>
                     </div>
                     <div class='form-group'>
-                        <label for="espb">ESPB</label>
-                        <input required class="form-control" type="number" min="1" id="espb">
+                        <label for="ispit">Ispit</label>
+                        <select required class="form-control" id="ispit"></select>
                     </div>
                     <div class='form-group'>
-                        <label for="semestar">Semestar</label>
-                        <input required class="form-control" type="number" min="1" max="8" id="semestar">
+                        <label for="opis">Opis</label>
+                        <textarea required class="form-control" id="opis"></textarea>
                     </div>
                     <button type="submit" id='sacuvajDugme' class="btn btn-primary form-control">Kreiraj</button>
                 </form>
@@ -79,64 +81,79 @@
         </div>
     </div>
     <script>
-        let ispiti = [];
         let selId = 0;
+        let radovi = [];
         $(document).ready(() => {
             ucitajIspite();
+            ucitajSeminarske()
             $('#pretraga').change(ucitajIspite);
             $('#obrisiDugme').click(() => {
-                $.post('./handler/obrisiIspit.php?id=' + selId).then(obradiPost)
+                $.post('./handler/obrisiSeminarski.php?id=' + selId).then(obradiPost)
             })
             $('#forma').submit(e => {
                 e.preventDefault();
                 const naziv = $('#naziv').val();
-                const skraceno = $('#skraceno').val();
-                const espb = $('#espb').val();
-                const semestar = $('#semestar').val();
+                const ispit = $('#ispit').val();
+                const broj_poena = $('#broj_poena').val();
+                const opis = $('#opis').val();
+                const obavezan = $('#obavezan').attr('checked') || false;
                 if (selId) {
-                    $.post('./handler/izmeniIspit.php?id=' + selId, {
+                    $.post('./handler/izmeniSeminarski.php?id=' + selId, {
                         naziv,
-                        skraceno,
-                        espb,
-                        semestar
+                        ispit,
+                        broj_poena,
+                        obavezan,
+                        opis
                     }).then(obradiPost);
                 } else {
-                    $.post('./handler/kreirajIspit.php', {
+                    $.post('./handler/kreirajSeminarski.php', {
                         naziv,
-                        skraceno,
-                        espb,
-                        semestar
+                        ispit,
+                        broj_poena,
+                        obavezan,
+                        opis
                     }).then(obradiPost);
                 }
             })
         })
-        function ucitajIspite() {
-            const pretraga = $('#pretraga').val();
-            $.getJSON('./handler/vratiSveIspite.php?naziv=' + pretraga).then(res => {
+
+        function ucitajSeminarske() {
+            $.getJSON('./handler/vratiSveSeminarske.php').then(res => {
                 if (res.status !== 200) {
                     alert(res.error);
                     return;
                 }
-                ispiti = res.body;
-
-                $('#ispiti').html('');
-                for (let ispit of ispiti) {
-                    $('#ispiti').append(`
-                    
-                    <tr onClick="selektujRed(${ispit.id})" class='red' id='ispit-${ispit.id}'>
-                        <td>${ispit.id}</td>
-                        <td>${ispit.naziv}</td>
-                        <td>${ispit.skraceno}</td>
-                        <td>${ispit.espb}</td>
-                        <td>${ispit.semestar}</td>
-                        
-                    </tr>
+                radovi = res.body;
+                $('#seminarski').html('');
+                for (let seminarski of radovi) {
+                    $('#seminarski').append(`
+                        <tr onClick="selektujRed(${seminarski.id})" class='red' id='red-${seminarski.id}'>
+                            <td>${seminarski.id}</td>
+                            <td>${seminarski.naziv}</td>
+                            <td>${seminarski.skraceno}</td>
+                            <td>${seminarski.broj_poena}</td>
+                            <td>${Number(seminarski.obavezan) ? 'da' : 'ne'}</td>
+                        </tr>
                     `)
                 }
-                const ispit = ispiti.find(e => e.id == selId);
-                if (!ispit) {
-                    selektujRed(0);
+            })
+        }
+
+        function ucitajIspite() {
+
+            $.getJSON('./handler/vratiSveIspite.php').then(res => {
+                if (res.status !== 200) {
+                    alert(res.error);
+                    return;
                 }
+
+                for (let ispit of res.body) {
+                    $('#ispit').append(`
+                        <option value='${ispit.id}'>${ispit.naziv}</option>
+                
+                    `)
+                }
+
             })
         }
 
@@ -145,7 +162,7 @@
             if (!res.status === 200) {
                 alert(res.status);
             }
-            ucitajIspite();
+            ucitajSeminarske();
         }
         function selektujRed(idReda) {
             if (idReda === selId) {
@@ -153,31 +170,34 @@
             } else {
                 selId = idReda;
             }
-            const ispit = selId === 0 ? undefined : ispiti.find(e => e.id == selId);
+            const seminarski = selId === 0 ? undefined : radovi.find(e => e.id == selId);
 
-            $('#ispiti').children().each((index, element) => {
-                if (element.id === 'ispit-' + selId) {
+            $('#seminarski').children().each((index, element) => {
+                if (element.id === 'red-' + selId) {
                     element.className = 'red selected'
                 } else {
                     element.className = 'red'
                 }
             })
-            if (!ispit) {
+            if (!seminarski) {
                 $('#naziv').val('');
                 $('#skraceno').val('');
                 $('#espb').val('');
                 $('#semestar').val('');
+                $('#obavezan').attr('checked', false);
                 $('#obrisiDugme').attr('hidden', true);
-                $('#sacuvajDugme').html('Kreiraj ispit');
+                $('#sacuvajDugme').html('Kreiraj seminarski rad');
                 return;
             }
-            $('#naziv').val(ispit.naziv);
-            $('#skraceno').val(ispit.skraceno);
-            $('#espb').val(ispit.espb);
-            $('#semestar').val(ispit.semestar);
+            $('#naziv').val(seminarski.naziv);
+            $('#ispit').val(seminarski.ispit);
+            $('#broj_poena').val(seminarski.broj_poena);
+            $('#opis').val(seminarski.opis);
+            $('#obavezan').attr('checked', Number(seminarski.obavezan) !== 0);
             $('#obrisiDugme').attr('hidden', false);
-            $('#sacuvajDugme').html('Izmeni ispit');
+            $('#sacuvajDugme').html('Izmeni seminarski rad');
         }
+
     </script>
 </body>
 

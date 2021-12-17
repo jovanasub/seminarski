@@ -8,7 +8,7 @@ $ispitServis= new IspitServis($broker);
 try {
     echo json_encode([
         "status"=>200,
-        "body"=>$ispitServis->getAll($_GET['naziv'])
+        "body"=>$ispitServis->getAll(isset($_GET['naziv'])?$_GET['naziv']:'')
     ]);
 } catch (\Exception $ex) {
     echo json_encode([
