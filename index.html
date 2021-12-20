@@ -86,7 +86,6 @@
         $(document).ready(() => {
             ucitajIspite();
             ucitajSeminarske()
-            $('#pretraga').change(ucitajIspite);
             $('#obrisiDugme').click(() => {
                 $.post('./handler/obrisiSeminarski.php?id=' + selId).then(obradiPost)
             })
